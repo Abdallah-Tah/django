@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+
+<table class="min-w-full divide-y divide-gray-200">
+  <thead class="bg-gray-50">
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Phone</th>
+      <th>Address</th>
+      <th>City</th>
+      <th>State</th>
+      <th>Zipcode</th>
+      <th>Created At</th>
+      <th>ID</th>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    
+    {% if records %}
+      {% for record in records %}
+        <tr>
+          <td>{{ record.first_name }} {{ record.last_name }}</td>
+          <td>{{ record.email }}</td>
+          <td>{{ record.phone }}</td>
+          <td>{{ record.address }}</td>
+          <td>{{ record.city }}</td>
+          <td>{{ record.state }}</td>
+          <td>{{ record.zipcode }}</td>
+          <td>{{ record.created_at }}</td>
+          <td><a href="{% url 'record' record.id %}">{{ record.id }}</a></td>
+        </tr>
+      {% endfor %}
+    {% endif %}
+    
+  </tbody>
+</table>
+
+{% else %}
+
+<div class="w-1/2 mx-auto">
+  <h1 class="text-xl mb-4">Login</h1>
+
+  <form method="POST" action="{% url 'home' %}">
+    {% csrf_token %}
+
+    <div class="mb-4">
+      <input type="text" class="form-input" name="username" placeholder="Username" required>
+    </div>
+    <div class="mb-4">
+      <input type="password" class="form-input" name="password" placeholder="Password" required>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded">Login</button>
+  </form>
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load my_tags %}
+
+<div class="w-1/2 mx-auto">
+  <h1 class="text-xl mb-4">Add Record</h1>
+
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+	{% styled_button "Update Record" "some-value" "some-extra-classes" %}
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "auth/base.html" %} {% block content %}
+
+<div class="p-4 font-semibold text-gray-700 mb-4">
+  <h3>
+    Dashboard
+  </h3>
+</div>
+
+<div class="p-4 bg-white rounded-lg shadow-xs">
+  You are logged in! {{ user.username }}
+</div>
+{% endblock %}

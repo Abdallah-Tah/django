@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html :class="{ 'theme-dark': dark }" x-data="data()" lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>Yoga Asanas</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.15/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    
+    <script src="{% static 'auth/assets/js/init-alpine.js' %}"></script>
+  </head>
+  <body>
+    <div
+    x-data="data()"
+      class="flex h-screen bg-gray-200 font-roboto"
+    >
+      {% include 'auth/navbar.html' %}
+
+      <!-- Page Heading -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        {% include 'auth/top-menu.html' %}
+
+        <!-- Page Content -->
+        <main class="relative flex-1 overflow-y-auto focus:outline-none">
+          <div class="container mx-auto px-6 py-8">
+            {% block content %} {% endblock %}
+          </div>
+          <footer class="pt-4">
+            <div class="flex justify-center">
+              <div class="text-center">
+                <p class="text-sm text-gray-600">
+                  ©
+                  <script>
+                    document.write(new Date().getFullYear() + ",");
+                  </script>
+                  - Made by Abdallah Mohamed All rights reserved.
+                </p>
+              </div>
+            </div>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        let sidebarOpen = false;
+
+        // Toggle sidebar on button click
+        document
+          .querySelector("[data-drawer-toggle='default-sidebar']")
+          .addEventListener("click", function () {
+            sidebarOpen = !sidebarOpen;
+            const sidebar = document.getElementById("default-sidebar");
+            sidebar.style.transform = sidebarOpen
+              ? "translateX(0)"
+              : "translateX(-100%)";
+          });
+
+        // Close dropdown menu when clicking outside
+        document.addEventListener("click", function (event) {
+          const dropdown = document.querySelector(
+            "[x-data='{ dropdownOpen: false }']"
+          );
+          const dropdownOpen = dropdown.getAttribute("x-data").includes("true");
+          if (dropdownOpen && !dropdown.contains(event.target)) {
+            dropdown.querySelector("button").click();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

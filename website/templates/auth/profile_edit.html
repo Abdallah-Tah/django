@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <!-- Profile Information Form -->
+    <form method="post" action="{% url 'profile_edit' %}">
+        {% csrf_token %}
+        {{ profile_form.as_p }}
+        <button type="submit" name="profile_form">Update Profile</button>
+    </form>
+
+    <!-- Password Change Form -->
+    <form method="post" action="{% url 'profile_edit' %}">
+        {% csrf_token %}
+        {{ password_form.as_p }}
+        <button type="submit" name="password_form">Change Password</button>
+    </form>
+
+    <!-- Profile Photo Form -->
+    <form method="post" action="{% url 'profile_edit' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ photo_form.as_p }}
+        <button type="submit" name="photo_form">Update Photo</button>
+    </form>
+</div>
+{% endblock %}
