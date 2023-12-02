@@ -50,33 +50,33 @@ class AddRecordForm(forms.ModelForm):
 		label=""
 	)
     
-# def profile_edit(request):
-#     if request.method == 'POST':
-#         if 'profile_form' in request.POST:
-#             profile_form = ProfileForm(request.POST, instance=request.user)
-#             if profile_form.is_valid():
-#                 profile_form.save()
-#                 # Redirect or indicate success
-#         elif 'password_form' in request.POST:
-#             password_form = PasswordChangeForm(request.user, request.POST)
-#             if password_form.is_valid():
-#                 password_form.save()
-#                 # Redirect or indicate success
-#         elif 'photo_form' in request.POST:
-#             photo_form = ProfilePhotoForm(request.POST, request.FILES, instance=request.user.profile)
-#             if photo_form.is_valid():
-#                 photo_form.save()
-#                 # Redirect or indicate success
-#     else:
-#         profile_form = ProfileForm(instance=request.user)
-#         password_form = PasswordChangeForm(request.user)
-#         photo_form = ProfilePhotoForm(instance=request.user.profile)
+	# def profile_edit(request):
+    # if request.method == 'POST':
+    #     if 'profile_form' in request.POST:
+    #         profile_form = ProfileForm(request.POST, instance=request.user)
+    #         if profile_form.is_valid():
+    #             profile_form.save()
+    #             # Redirect or indicate success
+    #     elif 'password_form' in request.POST:
+    #         password_form = PasswordChangeForm(request.user, request.POST)
+    #         if password_form.is_valid():
+    #             password_form.save()
+    #             # Redirect or indicate success
+    #     elif 'photo_form' in request.POST:
+    #         photo_form = ProfilePhotoForm(request.POST, request.FILES, instance=request.user.profile)
+    #         if photo_form.is_valid():
+    #             photo_form.save()
+    #             # Redirect or indicate success
+    # else:
+    #     profile_form = ProfileForm(instance=request.user)
+    #     password_form = PasswordChangeForm(request.user)
+    #     photo_form = ProfilePhotoForm(instance=request.user.profile)
 
-#     return render(request, 'profile_edit.html', {
-#         'profile_form': profile_form,
-#         'password_form': password_form,
-#         'photo_form': photo_form
-#     })
+    # return render(request, 'profile_edit.html', {
+    #     'profile_form': profile_form,
+    #     'password_form': password_form,
+    #     'photo_form': photo_form
+    # })
 
     class Meta:
         model = Record
