@@ -69,7 +69,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'yoga_asanas',
         'USER': 'root',
-        'PASSWORD': 'Kilimandzaro93.',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '3306',
     }
