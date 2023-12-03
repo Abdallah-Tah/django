@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.http import HttpResponse
@@ -8,6 +10,7 @@ from .models import Record
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
+from .models import UserProgress
 
 
 def welcome(request):
@@ -76,17 +79,16 @@ def register_user(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
-            # Authenticate and login
-            username = form.cleaned_data['username']
-            user = authenticate(username=username, password=form.cleaned_data['password1'])
+            user = form.save()  # Save the user and get the instance
             login(request, user)
             messages.success(request, "You Have Successfully Registered! Welcome!")
-            # create user progress tupple
-            #cursorObject.execute("INSERT INTO user_progress VALUES((SELECT MAX(id) FROM user),1,CURRENT_TIMESTAMP, 0);")
+
+            user_progress = UserProgress(user=user, current_week=1, start_date=timezone.now().date(), satisfied_requirements=0)
+            user_progress.save()
+
+
             return redirect('dashboard')
         else:
-            # Directly render the page with the form containing errors
             messages.error(request, "There was an error with your registration. Please try again.")
             return render(request, 'home/register.html', {'form': form})
     else:
