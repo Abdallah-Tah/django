@@ -2,15 +2,16 @@ from datetime import timezone
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.http import HttpResponse
+#from django.http import HttpResponse
 
-from mydb import cursorObject
+#from mydb import cursorObject
 from .forms import SignUpForm, AddRecordForm
 from .models import Record
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import UserProgress
+import datetime
 
 
 def welcome(request):
@@ -19,7 +20,18 @@ def welcome(request):
 
 @login_required
 def dashboard(request):
-    return render(request, 'auth/dashboard.html')
+
+    # Assuming the user is logged in, request.user gives you the currently logged-in user
+    current_user = request.user
+
+    try:
+        # Retrieve the UserProgress instance associated with the current user
+        user_progress_entry = UserProgress.objects.get(user=current_user)
+    except UserProgress.DoesNotExist:
+        # Handle the case where UserProgress entry does not exist for the current user
+        user_progress_entry = None
+
+    return render(request, 'auth/dashboard.html',{'user_progress': user_progress_entry})
 
 
 def login_user(request):
@@ -83,7 +95,7 @@ def register_user(request):
             login(request, user)
             messages.success(request, "You Have Successfully Registered! Welcome!")
 
-            user_progress = UserProgress(user=user, current_week=1, start_date=timezone.now().date(), satisfied_requirements=0)
+            user_progress = UserProgress(user_id=user.id, current_week=1, start_date=datetime.date.today(), satisfied_requirements = 0)
             user_progress.save()
 
 

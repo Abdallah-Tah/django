@@ -1,5 +1,9 @@
 {% extends "auth/base.html" %} {% block content %}
 
+<!-- Include the external JavaScript file -->
+<script src="{% static 'js/newSession.js' %}"></script>
+
+
 <div class="p-4 font-semibold text-gray-700 mb-4">
   <h3>
     Dashboard
@@ -7,6 +11,24 @@
 </div>
 
 <div class="p-4 bg-white rounded-lg shadow-xs">
-  You are logged in! {{ user.username }}
+
+  <h3 style="font-size: 30px; margin-bottom: 45px;">Hello, {{ user.username }}!</h3>
+
+  {% if user_progress %}
+    <div class="row" data-aos="fade-up" data-aos-delay="500">
+    <h6 data-aos="fade-up" data-aos-delay="300"  style="font-size: 20px; margin-bottom: 5px;">Progress details</h6>
+    <p>Current Week: {{ user_progress.current_week }}</p>
+    <p>Start Date: {{ user_progress.start_date }}</p>
+    <p>Satisfied Requirements: {% if user_progress.satisfied_requirements == 1 %}Yes{% else %}No{% endif %}</p>
+    <div>
+      <!-- Start Session Button -->
+    <button type="button" onclick="startSession()" style="margin-top: 20px; padding: 10px 15px; font-size: 16px; background-color: #3498db; color: #fff; border: none; cursor: pointer;">
+       Start Session
+    </button>
+
+{% else %}
+    <p>No progress available for {{ user.username }}.</p>
+{% endif %}
+
 </div>
 {% endblock %}
