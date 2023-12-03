@@ -5,6 +5,7 @@ from .models import Record
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
+from .models import UserProgress
 
 
 def welcome(request):
@@ -68,15 +69,15 @@ def register_user(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
-            # Authenticate and login
-            username = form.cleaned_data['username']
-            user = authenticate(username=username, password=form.cleaned_data['password1'])
+            user = form.save()  # Save the user and get the instance
             login(request, user)
             messages.success(request, "You Have Successfully Registered! Welcome!")
+
+            user_progress = UserProgress(user_id=user.id)
+            user_progress.save()
+
             return redirect('dashboard')
         else:
-            # Directly render the page with the form containing errors
             messages.error(request, "There was an error with your registration. Please try again.")
             return render(request, 'home/register.html', {'form': form})
     else:
