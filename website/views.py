@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import UserProgress
+import datetime
 
 
 def welcome(request):
@@ -73,7 +74,7 @@ def register_user(request):
             login(request, user)
             messages.success(request, "You Have Successfully Registered! Welcome!")
 
-            user_progress = UserProgress(user_id=user.id)
+            user_progress = UserProgress(user_id=user.id, current_week=1, start_date=datetime.date.today())
             user_progress.save()
 
             return redirect('dashboard')
