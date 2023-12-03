@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.http import HttpResponse
 
+from mydb import cursorObject
 from .forms import SignUpForm, AddRecordForm
 from .models import Record
 from django.contrib.auth.decorators import login_required
@@ -81,6 +82,8 @@ def register_user(request):
             user = authenticate(username=username, password=form.cleaned_data['password1'])
             login(request, user)
             messages.success(request, "You Have Successfully Registered! Welcome!")
+            # create user progress tupple
+            #cursorObject.execute("INSERT INTO user_progress VALUES((SELECT MAX(id) FROM user),1,CURRENT_TIMESTAMP, 0);")
             return redirect('dashboard')
         else:
             # Directly render the page with the form containing errors
