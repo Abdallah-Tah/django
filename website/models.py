@@ -17,7 +17,8 @@ class Record(models.Model):
 		return(f"{self.first_name} {self.last_name}")
 	
 class UserProgress(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     current_week = models.IntegerField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     satisfied_requirements = models.IntegerField(default=0, null=True, blank=True)
