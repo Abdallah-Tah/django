@@ -1,6 +1,4 @@
-{% extends "home/base.html" %}
-
-{% block content %}
+{% extends "home/base.html" %} {% block content %}
 <section class="banner-another"></section>
 
 <!-- About Section Start -->
@@ -12,27 +10,24 @@
           Register
         </h3>
         <form method="POST" action="">
-          {% csrf_token %}
-          
-          {% if form.errors %}
-            <div x-data="{ open: true }">
-              <div x-show="open" class="alert alert-warning">
-                Your Form Has Errors
-                {% for field in form %}
-                  {% if field.errors %}
-                    {{ field.errors }}
-                  {% endif %}
-                {% endfor %}
-                <button type="button" @click="open = false" class="close" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-            </div>
-          {% endif %}
-      
-          {{ form.as_p }}
-      
-          <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded">Register</button>
+          {% csrf_token %} {% for field in form %}
+          <div class="mb-4">
+            {{ field.label_tag }} {{ field }} {% if field.help_text %}
+            <p style="color: grey; font-size: 12px; margin-top: 5px; margin-bottom: 0px;">
+              {{ field.help_text }}</p>
+            {% endif %} {% for error in field.errors %}
+            <p style="color: red; font-weight: bold; font-size: 12px; margin-top: 5px; margin-bottom: 0px;">
+              {{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endfor %}
+
+          <button
+            type="submit" style="background-color: green; border-color: green; color: white; font-weight: bold; cursor: pointer;"
+            class="px-4 py-2 bg-green-600 text-white rounded"
+          >
+            Register
+          </button>
         </form>
       </div>
     </div>

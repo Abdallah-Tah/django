@@ -83,11 +83,13 @@ def register_user(request):
             messages.success(request, "You Have Successfully Registered! Welcome!")
             return redirect('dashboard')
         else:
+            # Directly render the page with the form containing errors
             messages.error(request, "There was an error with your registration. Please try again.")
-            return redirect('register_user')
+            return render(request, 'home/register.html', {'form': form})
     else:
         form = SignUpForm()
     return render(request, 'home/register.html', {'form': form})
+
 
 
 def customer_record(request, pk):
