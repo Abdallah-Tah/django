@@ -185,7 +185,7 @@ def session(request):
     # select current week of progress
     with connection.cursor() as cursor:
         cursor.execute("""SELECT current_week from user_progress where user_id = %s"""
-                       ,[user.id])
+                       , [user.id])
 
         # Fetch the result
         result = cursor.fetchone()
@@ -199,9 +199,47 @@ def session(request):
             # Fetch the result
             result = cursor.fetchall()
 
+        # list of asanas to do in current week
         asanas = [r[0] for r in result]
-        #print(f"Current week for user {user.id}: {week}")
-        return render(request, 'course/session.html', {'week': week, 'asanas':asanas})
+
+        # for each asana retrieve steps from has_step relation
+        with connection.cursor() as cursor:
+            cursor.execute(
+            """SELECT
+                    a.id,
+                    a.name,
+                    GROUP_CONCAT(JSON_OBJECT(s.technique, subquery.image_urls)) AS techniques
+                FROM
+                    to_do t
+                JOIN
+                    has_steps hs ON t.asana_id = hs.asana_id
+                JOIN
+                    step s ON hs.step_id = s.id
+                LEFT JOIN
+                    asana a ON t.asana_id = a.id
+                LEFT JOIN (
+                    SELECT
+                        s.id,
+                        JSON_ARRAYAGG(i.image_url) AS image_urls
+                    FROM
+                        step s
+                    LEFT JOIN
+                        image i ON s.id = i.step_id
+                    GROUP BY
+                        s.id
+                ) subquery ON s.id = subquery.id
+                WHERE
+                    t.week_id = %s
+                GROUP BY
+                    a.id, a.name
+                ORDER BY
+                    a.id;""", [week]
+            )
+            # Fetch the result
+            steps = cursor.fetchall()
+        print(steps)
+
+        return render(request, 'course/session.html', {'week': week, 'steps': steps})
     else:
         print("No result found for the given user_id.")
         return HttpResponse("Your response content")

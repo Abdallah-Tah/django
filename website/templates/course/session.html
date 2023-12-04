@@ -28,8 +28,16 @@
     {% if week %}
     <p>Week of course: {{week}}</p>
     {% endif %}
-    {% if asanas %}
-    <p>Asanas: {{asanas}}</p>
+    {% if steps %}
+
+        {% for asana in steps %}
+
+            <p>Asana Name: {{ asana.1}}</p>
+
+        {% endfor %}
+
+
+    <p>Asana: </p>
     {% endif %}
 
 </head>
