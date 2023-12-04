@@ -2,15 +2,14 @@ from datetime import timezone
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-#from django.http import HttpResponse
-
-#from mydb import cursorObject
+from django.http import HttpResponse
 from .forms import SignUpForm, AddRecordForm
 from .models import Record
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import UserProgress
+from django.db import connection
 import datetime
 
 
@@ -20,18 +19,17 @@ def welcome(request):
 
 @login_required
 def dashboard(request):
-
     # Assuming the user is logged in, request.user gives you the currently logged-in user
     current_user = request.user
 
     try:
         # Retrieve the UserProgress instance associated with the current user
-        user_progress_entry = UserProgress.objects.get(user=current_user)
+        user_progress = UserProgress.objects.get(user=current_user)
     except UserProgress.DoesNotExist:
         # Handle the case where UserProgress entry does not exist for the current user
         user_progress_entry = None
 
-    return render(request, 'auth/dashboard.html',{'user_progress': user_progress_entry})
+    return render(request, 'auth/dashboard.html', {'user_progress': user_progress})
 
 
 def login_user(request):
@@ -95,18 +93,21 @@ def register_user(request):
             login(request, user)
             messages.success(request, "You Have Successfully Registered! Welcome!")
 
-            user_progress = UserProgress(user_id=user.id, current_week=1, start_date=datetime.date.today(), satisfied_requirements = 0)
-            user_progress.save()
+            with connection.cursor() as cursor:
+                cursor.execute("""INSERT INTO user_progress
+                VALUES(NULL,1,CURRENT_TIMESTAMP, 0, %s);""",
+                               [user.id])
 
+            connection.commit()
 
             return redirect('dashboard')
+
         else:
             messages.error(request, "There was an error with your registration. Please try again.")
             return render(request, 'home/register.html', {'form': form})
     else:
         form = SignUpForm()
     return render(request, 'home/register.html', {'form': form})
-
 
 
 def customer_record(request, pk):
@@ -178,8 +179,30 @@ def profile_edit(request):
         return redirect('login')
 
 
-def pick_course(request):
+def session(request):
+    # current user
+    user = request.user
+    # select current week of progress
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT current_week from user_progress where user_id = %s"""
+                       ,[user.id])
 
-    return render(request, 'course/profile_pick_course.html')
-    #return HttpResponse("Your response content")
-    #return redirect('pick_course')
+        # Fetch the result
+        result = cursor.fetchone()
+    # Check if the result is not None before accessing its value
+    if result is not None:
+        week = result[0]
+        # now select asanas for this week
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT asana_id from to_do where week_id = %s"""
+                           , [week])
+            # Fetch the result
+            result = cursor.fetchall()
+
+        asanas = [r[0] for r in result]
+        #print(f"Current week for user {user.id}: {week}")
+        return render(request, 'course/session.html', {'week': week, 'asanas':asanas})
+    else:
+        print("No result found for the given user_id.")
+        return HttpResponse("Your response content")
+    # return redirect('pick_course')
