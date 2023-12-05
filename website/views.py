@@ -1,3 +1,4 @@
+import json
 from datetime import timezone
 
 from django.contrib.auth import authenticate, login, logout
@@ -205,41 +206,48 @@ def session(request):
         # for each asana retrieve steps from has_step relation
         with connection.cursor() as cursor:
             cursor.execute(
-            """SELECT
-                    a.id,
-                    a.name,
-                    GROUP_CONCAT(JSON_OBJECT(s.technique, subquery.image_urls)) AS techniques
-                FROM
-                    to_do t
-                JOIN
-                    has_steps hs ON t.asana_id = hs.asana_id
-                JOIN
-                    step s ON hs.step_id = s.id
-                LEFT JOIN
-                    asana a ON t.asana_id = a.id
-                LEFT JOIN (
-                    SELECT
-                        s.id,
-                        JSON_ARRAYAGG(i.image_url) AS image_urls
-                    FROM
-                        step s
-                    LEFT JOIN
-                        image i ON s.id = i.step_id
-                    GROUP BY
-                        s.id
-                ) subquery ON s.id = subquery.id
-                WHERE
-                    t.week_id = %s
-                GROUP BY
-                    a.id, a.name
-                ORDER BY
-                    a.id;""", [week]
+                """SELECT
+                                a.id,
+                                a.name,
+                                JSON_OBJECTAGG(s.technique, subquery.image_urls) AS steps
+                            FROM
+                                to_do t
+                            JOIN
+                                has_steps hs ON t.asana_id = hs.asana_id
+                            JOIN
+                                step s ON hs.step_id = s.id
+                            LEFT JOIN
+                                asana a ON t.asana_id = a.id
+                            LEFT JOIN (
+                                SELECT
+                                    s.id,
+                                    JSON_ARRAYAGG(i.image_url) AS image_urls
+                                FROM
+                                    step s
+                                LEFT JOIN
+                                    image i ON s.id = i.step_id
+                                GROUP BY
+                                    s.id
+                            ) subquery ON s.id = subquery.id
+                            WHERE
+                                t.week_id = %s
+                            GROUP BY
+                                a.id, a.name
+                            ORDER BY
+                                a.id;""", [week]
             )
             # Fetch the result
             steps = cursor.fetchall()
-        print(steps)
+            processed_steps = ()
+            for step in steps:
+                id = step[0]
+                name = step[1]
+                technique = json.loads(step[2])
+                processed_steps = processed_steps + ((id,name,technique),)
 
-        return render(request, 'course/session.html', {'week': week, 'steps': steps})
+            print(processed_steps)
+
+        return render(request, 'course/session.html', {'week': week, 'steps': processed_steps})
     else:
         print("No result found for the given user_id.")
         return HttpResponse("Your response content")

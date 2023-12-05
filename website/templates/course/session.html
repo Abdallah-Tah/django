@@ -30,18 +30,47 @@
     {% endif %}
     {% if steps %}
 
+
+
+
+
+
+
+    <ul>
         {% for asana in steps %}
+            <li>
+                <h2>{{ asana.1 }}</h2>
+                {% if asana.2 %}
 
-            <p>Asana Name: {{ asana.1}}</p>
+                    <ol>
+                        {% for technique, images in asana.2.items %}
 
+                            <li>
+                                <h3>{{ technique }}</h3>
+
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p>No steps for this asana.</p>
+                {% endif %}
+            </li>
         {% endfor %}
+    </ul>
+{% else %}
+    <p>No steps available.</p>
 
 
-    <p>Asana: </p>
     {% endif %}
+
+
+
+
 
 </head>
 <body>
+
+
 
 </body>
 </html>
