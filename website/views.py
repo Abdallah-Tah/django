@@ -7,7 +7,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import UserProgress
 import datetime
-
+from .forms import UserProfileForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 def welcome(request):
     return render(request, 'home/index.html')  
@@ -136,20 +138,29 @@ def update_record(request, pk):
 		messages.success(request, "You Must Be Logged In...")
 		return redirect('home')
 	
+@login_required
 def profile_edit(request):
-    if request.user.is_authenticated:
-        if request.method == "POST":
-            form = SignUpForm(request.POST, instance=request.user)
-            if form.is_valid():
-                form.save()
-                messages.success(request, "Profile Updated...")
+    if request.method == 'POST':
+        if 'profile_form' in request.POST:
+            profile_form = UserProfileForm(request.POST, instance=request.user)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, "Profile updated successfully.")
                 return redirect('dashboard')
-        else:
-            form = SignUpForm(instance=request.user)
-        
-        # Make sure the template path includes the 'auth' directory.
-        return render(request, 'auth/profile_edit.html', {'form': form})
-    
+
+        elif 'password_form' in request.POST:
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)  # Important to keep the user logged in after password change
+                messages.success(request, "Password changed successfully.")
+                return redirect('dashboard')
+
     else:
-        messages.error(request, "You Must Be Logged In...")  # This should probably be an error message instead of a success message.
-        return redirect('login')
+        profile_form = UserProfileForm(instance=request.user)
+        password_form = PasswordChangeForm(request.user)
+
+    return render(request, 'auth/profile_edit.html', {
+        'profile_form': profile_form,
+        'password_form': password_form
+    })

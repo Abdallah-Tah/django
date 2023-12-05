@@ -70,3 +70,16 @@ class AddRecordForm(forms.ModelForm):
             'state': forms.TextInput(attrs={'class': 'block w-full px-4 py-2 mt-1 border rounded-md', 'placeholder': 'State'}),
             'zipcode': forms.TextInput(attrs={'class': 'block w-full px-4 py-2 mt-1 border rounded-md', 'placeholder': 'Zip Code'}),
         }
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'block w-full px-4 py-2 mt-1 border rounded-md', 'placeholder': 'Username'}),
+            'first_name': forms.TextInput(attrs={'class': 'block w-full px-4 py-2 mt-1 border rounded-md', 'placeholder': 'First Name'}),
+            'last_name': forms.TextInput(attrs={'class': 'block w-full px-4 py-2 mt-1 border rounded-md', 'placeholder': 'Last Name'}),
+            'email': forms.EmailInput(attrs={'class': 'block w-full px-4 py-2 mt-1 border rounded-md', 'placeholder': 'Email'}),
+        }
+
+        
