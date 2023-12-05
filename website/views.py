@@ -200,9 +200,6 @@ def session(request):
             # Fetch the result
             result = cursor.fetchall()
 
-        # list of asanas to do in current week
-        asanas = [r[0] for r in result]
-
         # for each asana retrieve steps from has_step relation
         with connection.cursor() as cursor:
             cursor.execute(
@@ -251,4 +248,4 @@ def session(request):
     else:
         print("No result found for the given user_id.")
         return HttpResponse("Your response content")
-    # return redirect('pick_course')
+
