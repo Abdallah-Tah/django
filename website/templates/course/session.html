@@ -1,14 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
     <title>Yoga</title>
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Montserrat:100,200,300,400,500,600,700,800|Old+Standard+TT:400,400i,700" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet">
@@ -19,58 +14,66 @@
             height: auto;
             padding-top: 200px;
         }
-
+        .fade-in-out {
+            opacity: 0;
+            animation: fadeInOut 5s linear forwards;
+            text-align: center; /* Center text horizontally */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        @keyframes fadeInOut {
+            0%, 100% {
+                opacity: 0;
+            }
+            20%, 80% {
+                opacity: 1;
+            }
+        }
     </style>
-
-    <meta charset="UTF-8">
-    <title>Title</title>
-
-    {% if week %}
-    <p>Week of course: {{week}}</p>
-    {% endif %}
-    {% if steps %}
-
-
-
-
-
-
-
-    <ul>
-        {% for asana in steps %}
-            <li>
-                <h2>{{ asana.1 }}</h2>
-                {% if asana.2 %}
-
-                    <ol>
-                        {% for technique, images in asana.2.items %}
-
-                            <li>
-                                <h3>{{ technique }}</h3>
-
-                            </li>
-                        {% endfor %}
-                    </ol>
-                {% else %}
-                    <p>No steps for this asana.</p>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No steps available.</p>
-
-
-    {% endif %}
-
-
-
-
-
 </head>
 <body>
+    {% if week %}
+        <p>Week of course: {{week}}</p>
+    {% endif %}
+    {% if steps %}
+        <ul>
+            {% for asana in steps %}
+            <h2 class = "fade-in-out">{{ asana.1 }}</h2>
+                <li>
+                    {% if asana.2 %}
 
-
-
+                        <ol>
+                            {% for technique, images in asana.2.items %}
+                                <!-- Apply fade-in-out class to each technique -->
+                                <p class="fade-in-out">{{ technique }}</p>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p>No steps for this asana.</p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No steps available.</p>
+    {% endif %}
+    <script>
+        // JavaScript code to delay the fade-in effect for each technique
+        document.addEventListener("DOMContentLoaded", function() {
+            var techniques = document.querySelectorAll('.fade-in-out');
+            techniques.forEach(function(technique, index) {
+                setTimeout(function() {
+                    technique.style.animationDelay = index * 5 + "s";
+                    technique.classList.add('fade-in-out');
+                    technique.addEventListener('animationend', function() {
+                        technique.remove(); // Remove the element after the animation ends
+                    });
+                }, index * 5000); // Delay next technique by the duration of the fade-out (5000ms)
+            });
+        });
+    </script>
 </body>
 </html>
