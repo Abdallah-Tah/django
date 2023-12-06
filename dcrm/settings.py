@@ -67,9 +67,9 @@ APPEND_SLASH = False
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'yoga',
+        'NAME': 'yoga_asanas',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'Kilimandzaro93.',
         'HOST': 'localhost',
         'PORT': '3306',
     }

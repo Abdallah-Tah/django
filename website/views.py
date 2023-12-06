@@ -208,15 +208,6 @@ def session(request):
     if result is not None:
         week = result[0]
 
-        # Check if the user has completed asanas for the current and subsequent weeks
-        while check_asanas_completed(week):
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE user_progress 
-                    SET current_week = current_week + 1 
-                    WHERE user_id = %s
-                """, [user.id])
-                week += 1
 
         # now select asanas for this week
         with connection.cursor() as cursor:
@@ -264,9 +255,9 @@ def session(request):
                 technique = json.loads(step[2])
                 processed_steps = processed_steps + ((id, name, technique),)
         
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT MAX(week_id) FROM to_do")
-            last_week = cursor.fetchone()[0]
+        # with connection.cursor() as cursor:
+        #     cursor.execute("SELECT MAX(week_id) FROM to_do")
+        #     last_week = cursor.fetchone()[0]
 
         # Initialize or update current asana index
         if 'current_asana_index' not in request.session:
@@ -294,7 +285,7 @@ def session(request):
         elif request.GET.get('action') == 'previous':
             request.session['current_asana_index'] -= 1
 
-        is_last_step = week == last_week and request.session['current_asana_index'] == len(processed_steps) - 1
+        # is_last_step = week == last_week and request.session['current_asana_index'] == len(processed_steps) - 1
 
         # Ensure the index stays within bounds
         request.session['current_asana_index'] = max(0, min(request.session['current_asana_index'], len(processed_steps) - 1))
