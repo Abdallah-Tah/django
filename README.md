@@ -53,10 +53,27 @@ The project was a collaborative effort, with team members frequently meeting to 
 
 ## How to Run
 
-1. Clone the repository.
-2. Install FastAPI and other dependencies.
-3. Run the FastAPI server.
-4. Open the HTML files in a browser.
+1. Clone the repository:
+   ```bash
+   git clone [repository URL]
+   cd [repository name]
+   ```
+2. Setup the Django Environment:
+   - Perform database migrations:
+     ```bash
+     python manage.py makemigrations
+     python manage.py migrate
+     ```
+   - Create a superuser (optional but recommended for admin access):
+     ```bash
+     python manage.py createsuperuser
+     ```
+4. Run the FastAPI server:
+   ```bash
+   python manage.py runserver
+   ```
+5. Access the application in a web browser at `http://127.0.0.1:8000/`.
+6. (Optional) To access the Django admin panel, navigate to `http://127.0.0.1:8000/admin` and log in using the superuser credentials.
 
 ## License
 
