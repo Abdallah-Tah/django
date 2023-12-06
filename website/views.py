@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from .models import UserProgress
 from django.db import connection
 import datetime
+from django.db import connection, IntegrityError
 
 
 def welcome(request):
@@ -180,86 +181,114 @@ def profile_edit(request):
         return redirect('login')
 
 
+
 def session(request):
-    # current user
-    user = request.user
-    # select current week of progress
-    with connection.cursor() as cursor:
-        cursor.execute("""SELECT current_week from user_progress where user_id = %s"""
-                       , [user.id])
-
-        # Fetch the result
-        result = cursor.fetchone()
-    # Check if the result is not None before accessing its value
-    if result is not None:
-        week = result[0]
-        # now select asanas for this week
+    # Function to check if asanas for the week are completed
+    def check_asanas_completed(week):
         with connection.cursor() as cursor:
-            cursor.execute("""SELECT asana_id from to_do where week_id = %s"""
-                           , [week])
-            # Fetch the result
-            result = cursor.fetchall()
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM to_do
+                WHERE week_id = %s
+                AND asana_id NOT IN (
+                    SELECT asana_id 
+                    FROM asanas_performed 
+                    WHERE user_id = %s
+                )""", [week, user.id])
+            return cursor.fetchone()[0] == 0
 
-        # for each asana retrieve steps from has_step relation
+    # Function to fetch asanas for a given week
+    def get_asanas_for_week(week):
         with connection.cursor() as cursor:
             cursor.execute(
                 """SELECT
-                                a.id,
-                                a.name,
-                                JSON_OBJECTAGG(s.technique, subquery.image_urls) AS steps
-                            FROM
-                                to_do t
-                            JOIN
-                                has_steps hs ON t.asana_id = hs.asana_id
-                            JOIN
-                                step s ON hs.step_id = s.id
-                            LEFT JOIN
-                                asana a ON t.asana_id = a.id
-                            LEFT JOIN (
-                                SELECT
-                                    s.id,
-                                    JSON_ARRAYAGG(i.image_url) AS image_urls
-                                FROM
-                                    step s
-                                LEFT JOIN
-                                    image i ON s.id = i.step_id
-                                GROUP BY
-                                    s.id
-                            ) subquery ON s.id = subquery.id
-                            WHERE
-                                t.week_id = %s
-                            GROUP BY
-                                a.id, a.name
-                            ORDER BY
-                                a.id;""", [week]
+                       a.id,
+                       a.name,
+                       JSON_OBJECTAGG(s.technique, subquery.image_urls) AS steps
+                   FROM
+                       to_do t
+                   JOIN
+                       has_steps hs ON t.asana_id = hs.asana_id
+                   JOIN
+                       step s ON hs.step_id = s.id
+                   LEFT JOIN
+                       asana a ON t.asana_id = a.id
+                   LEFT JOIN (
+                       SELECT
+                           s.id,
+                           JSON_ARRAYAGG(i.image_url) AS image_urls
+                       FROM
+                           step s
+                       LEFT JOIN
+                           image i ON s.id = i.step_id
+                       GROUP BY
+                           s.id
+                   ) subquery ON s.id = subquery.id
+                   WHERE
+                       t.week_id = %s
+                   GROUP BY
+                       a.id, a.name
+                   ORDER BY
+                       a.id;""",
+                [week]
             )
-            # Fetch the result
             steps = cursor.fetchall()
-            processed_steps = ()
+            processed_steps = []
             for step in steps:
                 id = step[0]
                 name = step[1]
                 technique = json.loads(step[2])
-                processed_steps = processed_steps + ((id,name,technique),)
+                processed_steps.append((id, name, technique))
+            return processed_steps
 
-            print(processed_steps)
+    # Current user
+    user = request.user
 
-            # Initialize or update current asana index
+    # Select current week of progress
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT current_week from user_progress where user_id = %s""", [user.id])
+        result = cursor.fetchone()
+
+    if result:
+        week = result[0]
+        TOTAL_WEEKS = 180 
+
+        processed_steps = get_asanas_for_week(week)
+
+        # Initialize or update current asana index
         if 'current_asana_index' not in request.session:
             request.session['current_asana_index'] = 0
 
         if request.GET.get('action') == 'next':
-            request.session['current_asana_index'] += 1
-        elif request.GET.get('action') == 'previous':
-            request.session['current_asana_index'] -= 1
+            if request.session['current_asana_index'] < len(processed_steps) - 1:
+                request.session['current_asana_index'] += 1
+            else:
+                if check_asanas_completed(week) and week < TOTAL_WEEKS:
+                    week += 1  # Move to the next week
+                    with connection.cursor() as cursor:
+                        cursor.execute("""
+                            UPDATE user_progress 
+                            SET current_week = %s
+                            WHERE user_id = %s
+                        """, [week, user.id])
+                    request.session['current_asana_index'] = 0
+                    processed_steps = get_asanas_for_week(week)
 
-        # Ensure the index stays within bounds
-        request.session['current_asana_index'] = max(0, min(request.session['current_asana_index'], len(processed_steps) - 1))
+        elif request.GET.get('action') == 'previous':
+            if request.session['current_asana_index'] > 0:
+                request.session['current_asana_index'] -= 1
+
+        # Check if the user is on the last step of the last week
+        is_last_step = week == TOTAL_WEEKS and request.session['current_asana_index'] == len(processed_steps) - 1
 
         # Select the current asana to display
-        current_asana = processed_steps[request.session['current_asana_index']]
+        current_asana = processed_steps[request.session['current_asana_index']] if processed_steps else None
 
-        return render(request, 'course/session.html', {'week': week, 'asana': current_asana})
+        return render(request, 'course/session.html', {
+            'week': week,
+            'asana': current_asana,
+            'is_last_step': is_last_step
+        })
 
     else:
         print("No result found for the given user_id.")
