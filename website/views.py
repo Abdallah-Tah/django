@@ -34,7 +34,6 @@ def dashboard(request):
     return render(request, 'auth/dashboard.html', {'user_progress': user_progress})
 
 
-
 def login_user(request):
     return render(request, 'home/login.html')
 
@@ -184,6 +183,9 @@ def profile_edit(request):
 
 
 def session(request):
+    # current user
+    user = request.user
+
     # Function to check if asanas for the week are completed
     def check_asanas_completed(week):
         with connection.cursor() as cursor:
@@ -198,101 +200,109 @@ def session(request):
                 )""", [week, user.id])
             return cursor.fetchone()[0] == 0
 
-    # Function to fetch asanas for a given week
-    def get_asanas_for_week(week):
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """SELECT
-                                a.id,
-                                a.name,
-                                JSON_OBJECTAGG(s.technique, subquery.image) AS steps
-                            FROM
-                                to_do t
-                            JOIN
-                                has_steps hs ON t.asana_id = hs.asana_id
-                            JOIN
-                                step s ON hs.step_id = s.id
-                            LEFT JOIN
-                                asana a ON t.asana_id = a.id
-                            LEFT JOIN (
-                                SELECT
-                                    s.id,
-                                    JSON_ARRAYAGG(i.image) AS image
-                                FROM
-                                    step s
-                                LEFT JOIN
-                                    image i ON s.id = i.step_id
-                                GROUP BY
-                                    s.id
-                            ) subquery ON s.id = subquery.id
-                            WHERE
-                                t.week_id = %s
-                            GROUP BY
-                                a.id, a.name
-                            ORDER BY
-                                a.id;""", [week]
-
-            )
-            steps = cursor.fetchall()
-            processed_steps = []
-            for step in steps:
-                id = step[0]
-                name = step[1]
-                technique = json.loads(step[2])
-                processed_steps.append((id, name, technique))
-            return processed_steps
-
-    # Current user
-    user = request.user
-
-    # Select current week of progress
+    # select current week of progress
     with connection.cursor() as cursor:
         cursor.execute("""SELECT current_week from user_progress where user_id = %s""", [user.id])
         result = cursor.fetchone()
 
-    if result:
+    if result is not None:
         week = result[0]
-        TOTAL_WEEKS = 180 
 
-        processed_steps = get_asanas_for_week(week)
+        # Check if the user has completed asanas for the current and subsequent weeks
+        while check_asanas_completed(week):
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE user_progress 
+                    SET current_week = current_week + 1 
+                    WHERE user_id = %s
+                """, [user.id])
+                week += 1
+
+        # now select asanas for this week
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT asana_id from to_do where week_id = %s""", [week])
+            result = cursor.fetchall()
+
+        # for each asana retrieve steps from has_step relation
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT
+                       a.id,
+                       a.name,
+                       JSON_OBJECTAGG(s.technique, subquery.image) AS steps
+                   FROM
+                       to_do t
+                   JOIN
+                       has_steps hs ON t.asana_id = hs.asana_id
+                   JOIN
+                       step s ON hs.step_id = s.id
+                   LEFT JOIN
+                       asana a ON t.asana_id = a.id
+                   LEFT JOIN (
+                       SELECT
+                           s.id,
+                           JSON_ARRAYAGG(i.image) AS image
+                       FROM
+                           step s
+                       LEFT JOIN
+                           image i ON s.id = i.step_id
+                       GROUP BY
+                           s.id
+                   ) subquery ON s.id = subquery.id
+                   WHERE
+                       t.week_id = %s
+                   GROUP BY
+                       a.id, a.name
+                   ORDER BY
+                       a.id;""", [week]
+            )
+            steps = cursor.fetchall()
+            processed_steps = ()
+            for step in steps:
+                id = step[0]
+                name = step[1]
+                technique = json.loads(step[2])
+                processed_steps = processed_steps + ((id, name, technique),)
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT MAX(week_id) FROM to_do")
+            last_week = cursor.fetchone()[0]
 
         # Initialize or update current asana index
         if 'current_asana_index' not in request.session:
             request.session['current_asana_index'] = 0
 
         if request.GET.get('action') == 'next':
-            if request.session['current_asana_index'] < len(processed_steps) - 1:
-                request.session['current_asana_index'] += 1
-            else:
-                if check_asanas_completed(week) and week < TOTAL_WEEKS:
-                    week += 1  # Move to the next week
-                    with connection.cursor() as cursor:
-                        cursor.execute("""
-                            UPDATE user_progress 
-                            SET current_week = %s
-                            WHERE user_id = %s
-                        """, [week, user.id])
-                    request.session['current_asana_index'] = 0
-                    processed_steps = get_asanas_for_week(week)
+            current_asana_id = processed_steps[request.session['current_asana_index']][0]
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """INSERT INTO asanas_performed (user_id, asana_id) 
+                           SELECT %s, %s 
+                           WHERE NOT EXISTS (
+                               SELECT 1 FROM asanas_performed 
+                               WHERE user_id = %s AND asana_id = %s
+                           )""",
+                        [user.id, current_asana_id, user.id, current_asana_id]
+                    )
+            except IntegrityError:
+                # Handle the case where the insert operation fails (if needed)
+                pass
+
+            request.session['current_asana_index'] += 1
 
         elif request.GET.get('action') == 'previous':
-            if request.session['current_asana_index'] > 0:
-                request.session['current_asana_index'] -= 1
+            request.session['current_asana_index'] -= 1
 
-        # Check if the user is on the last step of the last week
-        is_last_step = week == TOTAL_WEEKS and request.session['current_asana_index'] == len(processed_steps) - 1
+        is_last_step = week == last_week and request.session['current_asana_index'] == len(processed_steps) - 1
+
+        # Ensure the index stays within bounds
+        request.session['current_asana_index'] = max(0, min(request.session['current_asana_index'], len(processed_steps) - 1))
 
         # Select the current asana to display
-        current_asana = processed_steps[request.session['current_asana_index']] if processed_steps else None
+        current_asana = processed_steps[request.session['current_asana_index']]
 
-        return render(request, 'course/session.html', {
-            'week': week,
-            'asana': current_asana,
-            'is_last_step': is_last_step
-        })
-
+        return render(request, 'course/session.html', {'week': week, 'asana': current_asana})
     else:
         print("No result found for the given user_id.")
         return HttpResponse("Your response content")
-
-
