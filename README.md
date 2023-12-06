@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project aims to simplify the experience of learning and practicing yoga by teaching users how to properly perform Asanas (yoga postures). Developed as part of the COS 457: Database Systems course at the University of Southern Maine, this web application is built using Python FastAPI and HTML.
+This project aims to simplify the experience of learning and practicing yoga by teaching users how to properly perform Asanas (yoga postures). Developed as part of the COS 457: Database Systems course at the University of Southern Maine, this web application is built using Python Django and HTML.
 
 ## Authors
 
