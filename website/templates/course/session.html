@@ -77,6 +77,13 @@
     {% else %}
         <p>No asanas available.</p>
     {% endif %}
+
+    {% if is_last_step %}
+    <div class="p-4 mt-4 bg-green-100 text-green-800 rounded-lg">
+        <p>Congratulations! You have completed all the yoga asanas in the course.</p>
+    </div>
+    {% endif %}
+
 </div>
 
 <script>
