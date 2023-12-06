@@ -14,12 +14,7 @@ urlpatterns = [
     path('delete_record/<int:pk>', views.delete_record, name='delete_record'),
     path('add_record/', views.add_record, name='add_record'),
     path('update_record/<int:pk>', views.update_record, name='update_record'),
-<<<<<<< HEAD
-    #C:\python\project-asana\website\templates\auth\profile_edit.html
-    path('profile_edit/', views.profile_edit, name='profile_edit'),
-=======
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/session/', views.session, name='session'),
->>>>>>> origin/aleksandra
 
 ]

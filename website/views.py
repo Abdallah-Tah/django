@@ -12,9 +12,7 @@ from django.contrib.auth.models import User
 from .models import UserProgress
 from django.db import connection
 import datetime
-from .forms import UserProfileForm
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
+
 
 def welcome(request):
     return render(request, 'home/index.html')
@@ -149,21 +147,6 @@ def add_record(request):
 
 
 def update_record(request, pk):
-<<<<<<< HEAD
-	if request.user.is_authenticated:
-		current_record = Record.objects.get(id=pk)
-		form = AddRecordForm(request.POST or None, instance=current_record)
-		if form.is_valid():
-			form.save()
-			messages.success(request, "Record Has Been Updated!")
-			return redirect('home')
-		return render(request, 'update_record.html', {'form':form})
-	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('home')
-	
-@login_required
-=======
     if request.user.is_authenticated:
         current_record = Record.objects.get(id=pk)
         form = AddRecordForm(request.POST or None, instance=current_record)
@@ -177,34 +160,14 @@ def update_record(request, pk):
         return redirect('home')
 
 
->>>>>>> origin/aleksandra
 def profile_edit(request):
-    if request.method == 'POST':
-        if 'profile_form' in request.POST:
-            profile_form = UserProfileForm(request.POST, instance=request.user)
-            if profile_form.is_valid():
-                profile_form.save()
-                messages.success(request, "Profile updated successfully.")
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            form = SignUpForm(request.POST, instance=request.user)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Profile Updated...")
                 return redirect('dashboard')
-<<<<<<< HEAD
-
-        elif 'password_form' in request.POST:
-            password_form = PasswordChangeForm(request.user, request.POST)
-            if password_form.is_valid():
-                user = password_form.save()
-                update_session_auth_hash(request, user)  # Important to keep the user logged in after password change
-                messages.success(request, "Password changed successfully.")
-                return redirect('dashboard')
-
-    else:
-        profile_form = UserProfileForm(instance=request.user)
-        password_form = PasswordChangeForm(request.user)
-
-    return render(request, 'auth/profile_edit.html', {
-        'profile_form': profile_form,
-        'password_form': password_form
-    })
-=======
         else:
             form = SignUpForm(instance=request.user)
 
@@ -281,9 +244,23 @@ def session(request):
 
             print(processed_steps)
 
-        return render(request, 'course/session.html', {'week': week, 'steps': processed_steps})
+            # Initialize or update current asana index
+        if 'current_asana_index' not in request.session:
+            request.session['current_asana_index'] = 0
+
+        if request.GET.get('action') == 'next':
+            request.session['current_asana_index'] += 1
+        elif request.GET.get('action') == 'previous':
+            request.session['current_asana_index'] -= 1
+
+        # Ensure the index stays within bounds
+        request.session['current_asana_index'] = max(0, min(request.session['current_asana_index'], len(processed_steps) - 1))
+
+        # Select the current asana to display
+        current_asana = processed_steps[request.session['current_asana_index']]
+
+        return render(request, 'course/session.html', {'week': week, 'asana': current_asana})
+
     else:
         print("No result found for the given user_id.")
         return HttpResponse("Your response content")
-
->>>>>>> origin/aleksandra
