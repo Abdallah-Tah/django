@@ -1,6 +1,3 @@
-To enhance your current README file with Django-specific setup instructions and migration details, you can integrate these steps into the "How to Run" section. Here's a revised version of your README, including Django setup and migration instructions:
-
-```markdown
 # Yoga Asana Practice and Learning Platform
 
 ## Overview
@@ -87,6 +84,3 @@ This project is licensed under the MIT License.
 We would like to thank Dr. Behrooz Mansouri for his invaluable guidance and the University of Southern Maine for providing us the opportunity to work on this project.
 
 For more details, please refer to the documentation included in the repository.
-```
-
-Ensure that the repository URL and the name of the repository are correctly specified. This updated README includes steps for cloning the repository, installing dependencies, setting up Django's environment (including migrations and creating a superuser), and running the server. It provides a clear and comprehensive guide for setting up and running your application.
