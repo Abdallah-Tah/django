@@ -1,6 +1,4 @@
 import json
-from datetime import timezone
-
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.http import HttpResponse
@@ -10,8 +8,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import UserProgress
-from django.db import connection
-import datetime
 from django.db import connection, IntegrityError
 
 
@@ -181,7 +177,6 @@ def profile_edit(request):
         return redirect('login')
 
 
-
 def session(request):
     # current user
     user = request.user
@@ -208,7 +203,6 @@ def session(request):
     if result is not None:
         week = result[0]
 
-
         # now select asanas for this week
         with connection.cursor() as cursor:
             cursor.execute("""SELECT asana_id from to_do where week_id = %s""", [week])
@@ -217,35 +211,28 @@ def session(request):
         # for each asana retrieve steps from has_step relation
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT
-                       a.id,
-                       a.name,
-                       JSON_OBJECTAGG(s.technique, subquery.image) AS steps
-                   FROM
-                       to_do t
-                   JOIN
-                       has_steps hs ON t.asana_id = hs.asana_id
-                   JOIN
-                       step s ON hs.step_id = s.id
-                   LEFT JOIN
-                       asana a ON t.asana_id = a.id
-                   LEFT JOIN (
-                       SELECT
-                           s.id,
-                           JSON_ARRAYAGG(i.image) AS image
-                       FROM
-                           step s
-                       LEFT JOIN
-                           image i ON s.id = i.step_id
-                       GROUP BY
-                           s.id
-                   ) subquery ON s.id = subquery.id
-                   WHERE
-                       t.week_id = %s
-                   GROUP BY
-                       a.id, a.name
-                   ORDER BY
-                       a.id;""", [week]
+                """-- select asana id, name, and key, value pair in form technique: image list
+                    SELECT a.id, a.name, JSON_OBJECTAGG(s.technique, subquery.image) AS steps
+                    -- join to_do and has_steps on asana_id to retrieve combined table 
+                    -- holding steps to be done in current week
+                    FROM to_do t JOIN has_steps hs 
+                    ON t.asana_id = hs.asana_id
+                    -- join with step table to retrieve details about each step
+                    JOIN step s ON hs.step_id = s.id
+                    -- join with asana table to retrieve name of asana
+                    LEFT JOIN asana a ON t.asana_id = a.id
+                    LEFT JOIN (
+			        -- JSON_ARRAYAGG aggregates images associated with step_id 
+			        SELECT s.id, JSON_ARRAYAGG(i.image) AS image
+			        FROM step s LEFT JOIN image i ON s.id = i.step_id
+			        GROUP BY s.id) 
+                    subquery ON s.id = subquery.id
+                    -- for current week
+			        WHERE t.week_id = %s
+                    -- grouped by name
+			        GROUP BY a.id, a.name
+                    -- asanas are ordered by id
+			        ORDER BY a.id;""", [week]
             )
             steps = cursor.fetchall()
             processed_steps = ()
@@ -254,7 +241,7 @@ def session(request):
                 name = step[1]
                 technique = json.loads(step[2])
                 processed_steps = processed_steps + ((id, name, technique),)
-        
+
         # with connection.cursor() as cursor:
         #     cursor.execute("SELECT MAX(week_id) FROM to_do")
         #     last_week = cursor.fetchone()[0]
@@ -288,7 +275,8 @@ def session(request):
         # is_last_step = week == last_week and request.session['current_asana_index'] == len(processed_steps) - 1
 
         # Ensure the index stays within bounds
-        request.session['current_asana_index'] = max(0, min(request.session['current_asana_index'], len(processed_steps) - 1))
+        request.session['current_asana_index'] = max(0, min(request.session['current_asana_index'],
+                                                            len(processed_steps) - 1))
 
         # Select the current asana to display
         current_asana = processed_steps[request.session['current_asana_index']]
@@ -296,4 +284,12 @@ def session(request):
         return render(request, 'course/session.html', {'week': week, 'asana': current_asana})
     else:
         print("No result found for the given user_id.")
+        return HttpResponse("Your response content")
+
+
+def process_week_changes(request):
+    user = request.user
+    print('hello')
+    with connection.cursor() as cursor:
+        cursor.execute("""CALL yoga_asanas.process_week_changes(%s)""", [user.id])
         return HttpResponse("Your response content")

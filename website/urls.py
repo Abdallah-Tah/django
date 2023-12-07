@@ -16,5 +16,6 @@ urlpatterns = [
     path('update_record/<int:pk>', views.update_record, name='update_record'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/session/', views.session, name='session'),
+    path('process-week-changes/', views.process_week_changes, name='process_week_changes')
 
 ]
